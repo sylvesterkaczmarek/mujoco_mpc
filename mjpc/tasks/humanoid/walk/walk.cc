@@ -34,8 +34,8 @@ std::string Walk::Name() const { return "Humanoid Walk"; }
 //     Residual (2): balance
 //     Residual (3): upright
 //     Residual (4): posture
-//     Residual (5): walk
-//     Residual (6): move feet
+//     Residual (5): velocity
+//     Residual (6): walk
 //     Residual (7): control
 //   Number of parameters:
 //     Parameter (0): torso height goal
@@ -143,11 +143,7 @@ void Walk::ResidualFn::Residual(const mjModel* model, const mjData* data,
   mju_add(com_vel, waist_lower_subcomvel, torso_velocity, 2);
   mju_scl(com_vel, com_vel, 0.5, 2);
 
-  // walk forward
-  residual[counter++] =
-      standing * (mju_dot(com_vel, forward, 2) - parameters_[1]);
-
-  // ----- move feet ----- //
+  // ----- velocity ----- //
   double* foot_right_vel = SensorByName(model, data, "foot_right_velocity");
   double* foot_left_vel = SensorByName(model, data, "foot_left_velocity");
   double move_feet[2];
@@ -158,6 +154,10 @@ void Walk::ResidualFn::Residual(const mjModel* model, const mjData* data,
   mju_copy(&residual[counter], move_feet, 2);
   mju_scl(&residual[counter], &residual[counter], standing, 2);
   counter += 2;
+
+  // walk forward
+  residual[counter++] =
+      standing * (mju_dot(com_vel, forward, 2) - parameters_[1]);
 
   // ----- control ----- //
   mju_copy(&residual[counter], data->ctrl, model->nu);
